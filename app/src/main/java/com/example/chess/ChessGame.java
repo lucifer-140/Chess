@@ -10,7 +10,15 @@ public class ChessGame {
     private boolean whiteInCheck = false;
     private boolean blackInCheck = false;
 
+    private OnPawnPromotionListener promotionListener;
 
+    public interface OnPawnPromotionListener {
+        void onPawnPromotion(int row, int col, String color);
+    }
+
+    public void setOnPawnPromotionListener(OnPawnPromotionListener listener) {
+        this.promotionListener = listener;
+    }
 
     public ChessGame() {
         board = new String[BOARD_SIZE][BOARD_SIZE];
@@ -138,9 +146,21 @@ public class ChessGame {
                 return;
             }
 
+            // **Pawn Promotion Check**
+            if ((piece.equals("whitepawn") && toRow == 0) || (piece.equals("blackpawn") && toRow == 7)) {
+                if (promotionListener != null) {
+                    promotionListener.onPawnPromotion(toRow, toCol, isWhite ? "white" : "black");
+                }
+            }
+
             isWhiteTurn = !isWhiteTurn; // Switch turn
         }
     }
+
+    public void setPieceAt(int row, int col, String newPiece) {
+        board[row][col] = newPiece;
+    }
+
 
 
     public int[] findKingPosition(String playerColor) {

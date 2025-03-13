@@ -11,12 +11,14 @@ import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
 
+import androidx.appcompat.app.AppCompatActivity;
+
 import java.util.List;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
-public class ChessBoardView extends View {
+public class ChessBoardView extends View implements ChessGame.OnPawnPromotionListener{
     private static final int BOARD_SIZE = 8;
     private Paint paint;
     private int cellSize;
@@ -42,6 +44,7 @@ public class ChessBoardView extends View {
         pieceBitmaps = new HashMap<>();
         loadPieceImages();
         startPulseAnimation();
+        game.setOnPawnPromotionListener(this);
     }
 
     private void loadPieceImages() {
@@ -131,6 +134,12 @@ public class ChessBoardView extends View {
                 }
             }
         }
+
+
+
+
+
+
 
         // **Filter Valid Moves: Only Show Moves That Don't Leave King in Check**
         List<int[]> safeMoves = new ArrayList<>();
@@ -230,4 +239,20 @@ public class ChessBoardView extends View {
             validMoves.clear();
         }
     }
+
+    public void promotePawn(int row, int col, String newPiece) {
+        game.setPieceAt(row, col, newPiece); // Replace pawn with selected piece
+        invalidate(); // Redraw board
+    }
+
+    private void showPawnPromotionDialog(int row, int col, String color) {
+        PawnPromotionDialog dialog = PawnPromotionDialog.newInstance(row, col, color);
+        dialog.show(((AppCompatActivity) getContext()).getSupportFragmentManager(), "PawnPromotionDialog");
+    }
+
+    @Override
+    public void onPawnPromotion(int row, int col, String color) {
+        showPawnPromotionDialog(row, col, color); // Call method to show dialog
+    }
+
 }

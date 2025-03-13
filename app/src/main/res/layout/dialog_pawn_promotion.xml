@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:gravity="center">
+
+    <TextView
+        android:id="@+id/titleText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Promote Your Pawn"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="8dp"
+        android:gravity="center"/>
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <ImageView
+            android:id="@+id/promotion_queen"
+            android:layout_width="72dp"
+            android:layout_height="72dp"
+            android:src="@drawable/whitequeen"
+            android:scaleType="fitCenter"
+            android:contentDescription="Queen"
+            android:padding="4dp"/>
+
+        <ImageView
+            android:id="@+id/promotion_rook"
+            android:layout_width="72dp"
+            android:layout_height="72dp"
+            android:src="@drawable/whiterook"
+            android:scaleType="fitCenter"
+            android:contentDescription="Rook"
+            android:padding="4dp"/>
+
+        <ImageView
+            android:id="@+id/promotion_bishop"
+            android:layout_width="72dp"
+            android:layout_height="72dp"
+            android:src="@drawable/whitebishop"
+            android:scaleType="fitCenter"
+            android:contentDescription="Bishop"
+            android:padding="4dp"/>
+
+        <ImageView
+            android:id="@+id/promotion_knight"
+            android:layout_width="72dp"
+            android:layout_height="72dp"
+            android:src="@drawable/whiteknight"
+            android:scaleType="fitCenter"
+            android:contentDescription="Knight"
+            android:padding="4dp"/>
+    </LinearLayout>
+</LinearLayout>
