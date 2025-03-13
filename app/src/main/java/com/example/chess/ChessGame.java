@@ -7,6 +7,10 @@ public class ChessGame {
     public static final int BOARD_SIZE = 8;
     private String[][] board;
     private boolean isWhiteTurn = true;
+    private boolean whiteInCheck = false;
+    private boolean blackInCheck = false;
+
+
 
     public ChessGame() {
         board = new String[BOARD_SIZE][BOARD_SIZE];
@@ -79,13 +83,34 @@ public class ChessGame {
 
     public boolean isValidMove(int fromRow, int fromCol, int toRow, int toCol) {
         List<int[]> validMoves = getValidMoves(fromRow, fromCol);
+
+        // Check if the move is normally valid
+        boolean foundMove = false;
         for (int[] move : validMoves) {
             if (move[0] == toRow && move[1] == toCol) {
-                return true;
+                foundMove = true;
+                break;
             }
         }
-        return false;
+
+        if (!foundMove) return false;
+
+        // Simulate the move
+        String piece = board[fromRow][fromCol];
+        String capturedPiece = board[toRow][toCol];
+
+        board[toRow][toCol] = piece;
+        board[fromRow][fromCol] = null;
+
+        boolean kingStillInCheck = isKingInCheck(piece.startsWith("white") ? "white" : "black");
+
+        // Undo move
+        board[fromRow][fromCol] = piece;
+        board[toRow][toCol] = capturedPiece;
+
+        return !kingStillInCheck; // Move is only valid if king is not left in check
     }
+
 
     public void movePiece(int fromRow, int fromCol, int toRow, int toCol) {
         String piece = board[fromRow][fromCol];
@@ -130,12 +155,34 @@ public class ChessGame {
         return null; // Should never happen unless the king is missing
     }
 
+
+
+
+    public boolean isMoveSafe(int fromRow, int fromCol, int toRow, int toCol) {
+        // Simulate the move
+        String piece = board[fromRow][fromCol];
+        String capturedPiece = board[toRow][toCol];
+
+        board[toRow][toCol] = piece;
+        board[fromRow][fromCol] = null;
+
+        // Check if the king is still in check
+        boolean kingStillInCheck = isKingInCheck(piece.startsWith("white") ? "white" : "black");
+
+        // Undo move
+        board[fromRow][fromCol] = piece;
+        board[toRow][toCol] = capturedPiece;
+
+        return !kingStillInCheck; // Move is safe if king is not left in check
+    }
+
+
     public boolean isKingInCheck(String playerColor) {
         int[] kingPos = findKingPosition(playerColor);
         if (kingPos == null) return false;
 
-        // Check if any enemy piece can move to the king's position
         String opponentColor = playerColor.equals("white") ? "black" : "white";
+
 
         for (int row = 0; row < 8; row++) {
             for (int col = 0; col < 8; col++) {
@@ -144,16 +191,83 @@ public class ChessGame {
                     List<int[]> moves = getValidMoves(row, col);
                     for (int[] move : moves) {
                         if (move[0] == kingPos[0] && move[1] == kingPos[1]) {
-                            return true; // King is in check
+                            if (playerColor.equals("white")) {
+                                whiteInCheck = true;
+                            } else {
+                                blackInCheck = true;
+                            }
+                            return true;
                         }
                     }
                 }
             }
         }
+
+        // Reset check state if no check is found
+        if (playerColor.equals("white")) {
+            whiteInCheck = false;
+        } else {
+            blackInCheck = false;
+        }
+
         return false;
     }
 
+    public boolean isCheckmate(String playerColor) {
+        if (!isKingInCheck(playerColor)) {
+            return false; // Not in check, so not checkmate
+        }
 
+        // Loop through all pieces of the player
+        for (int row = 0; row < 8; row++) {
+            for (int col = 0; col < 8; col++) {
+                String piece = board[row][col];
+                if (piece != null && piece.startsWith(playerColor)) {
+                    List<int[]> moves = getValidMoves(row, col);
+
+                    // Check if any move is safe
+                    for (int[] move : moves) {
+                        int toRow = move[0];
+                        int toCol = move[1];
+
+                        if (isMoveSafe(row, col, toRow, toCol)) {
+                            return false; // At least one legal move exists, so not checkmate
+                        }
+                    }
+                }
+            }
+        }
+
+        return true; // No valid moves left, checkmate
+    }
+
+    public boolean isStalemate(String playerColor) {
+        if (isKingInCheck(playerColor)) {
+            return false; // If king is in check, it's not stalemate
+        }
+
+        // Loop through all pieces of the player
+        for (int row = 0; row < 8; row++) {
+            for (int col = 0; col < 8; col++) {
+                String piece = board[row][col];
+                if (piece != null && piece.startsWith(playerColor)) {
+                    List<int[]> moves = getValidMoves(row, col);
+
+                    // Check if any move is safe
+                    for (int[] move : moves) {
+                        int toRow = move[0];
+                        int toCol = move[1];
+
+                        if (isMoveSafe(row, col, toRow, toCol)) {
+                            return false; // At least one legal move exists, so not stalemate
+                        }
+                    }
+                }
+            }
+        }
+
+        return true; // No valid moves left, stalemate
+    }
 
     private List<int[]> getPawnMoves(int row, int col, boolean isWhite) {
         List<int[]> moves = new ArrayList<>();

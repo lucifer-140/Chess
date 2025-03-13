@@ -96,6 +96,10 @@ public class ChessBoardView extends View {
         int[] blackKingPos = game.findKingPosition("black");
         boolean whiteInCheck = game.isKingInCheck("white");
         boolean blackInCheck = game.isKingInCheck("black");
+        boolean whiteCheckmate = game.isCheckmate("white");
+        boolean blackCheckmate = game.isCheckmate("black");
+        boolean whiteStalemate = game.isStalemate("white");
+        boolean blackStalemate = game.isStalemate("black");
 
         // Draw board
         for (int row = 0; row < BOARD_SIZE; row++) {
@@ -103,9 +107,9 @@ public class ChessBoardView extends View {
                 boolean isSelected = (row == selectedRow && col == selectedCol);
 
                 // Highlight king in red if in check
-                if ((whiteInCheck && whiteKingPos[0] == row && whiteKingPos[1] == col) ||
-                        (blackInCheck && blackKingPos[0] == row && blackKingPos[1] == col)) {
-                    paint.setColor(Color.RED); // Red for king in check
+                if ((whiteInCheck && whiteKingPos != null && whiteKingPos[0] == row && whiteKingPos[1] == col) ||
+                        (blackInCheck && blackKingPos != null && blackKingPos[0] == row && blackKingPos[1] == col)) {
+                    paint.setColor(Color.RED); // Red highlight for checked king
                 } else {
                     paint.setColor(isSelected ? ((row + col) % 2 == 0 ? lightColorActive : darkColorActive)
                             : ((row + col) % 2 == 0 ? lightColor : darkColor));
@@ -128,8 +132,22 @@ public class ChessBoardView extends View {
             }
         }
 
-        // Draw pulsating hint circles for valid moves
+        // **Filter Valid Moves: Only Show Moves That Don't Leave King in Check**
+        List<int[]> safeMoves = new ArrayList<>();
         for (int[] move : validMoves) {
+            int fromRow = selectedRow;
+            int fromCol = selectedCol;
+            int toRow = move[0];
+            int toCol = move[1];
+
+            // Simulate move and check if the king is still in check
+            if (game.isMoveSafe(fromRow, fromCol, toRow, toCol)) {
+                safeMoves.add(move);
+            }
+        }
+
+        // **Draw pulsating hint circles for filtered valid moves**
+        for (int[] move : safeMoves) {
             int row = move[0];
             int col = move[1];
 
@@ -145,7 +163,26 @@ public class ChessBoardView extends View {
                     paint
             );
         }
+
+        // **Display checkmate or stalemate message**
+        if (whiteCheckmate || blackCheckmate || whiteStalemate || blackStalemate) {
+            String message;
+            if (whiteCheckmate) {
+                message = "Checkmate! Black Wins!";
+            } else if (blackCheckmate) {
+                message = "Checkmate! White Wins!";
+            } else {
+                message = "Stalemate! Draw!";
+            }
+
+            // Draw text
+            paint.setColor(Color.BLACK);
+            paint.setTextSize(80);
+            paint.setTextAlign(Paint.Align.CENTER);
+            canvas.drawText(message, screenWidth / 2, screenHeight / 2, paint);
+        }
     }
+
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
