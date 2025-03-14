@@ -25,10 +25,10 @@
             android:id="@+id/promotion_queen"
             android:layout_width="72dp"
             android:layout_height="72dp"
-            android:src="@drawable/whitequeen"
-            android:scaleType="fitCenter"
             android:contentDescription="Queen"
-            android:padding="4dp"/>
+            android:padding="4dp"
+            android:scaleType="fitCenter"
+            android:src="@drawable/whitequeen" />
 
         <ImageView
             android:id="@+id/promotion_rook"

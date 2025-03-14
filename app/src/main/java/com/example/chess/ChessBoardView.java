@@ -8,6 +8,7 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.os.Handler;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 
@@ -173,6 +174,8 @@ public class ChessBoardView extends View implements ChessGame.OnPawnPromotionLis
             );
         }
 
+
+
         // **Display checkmate or stalemate message**
         if (whiteCheckmate || blackCheckmate || whiteStalemate || blackStalemate) {
             String message;
@@ -226,19 +229,63 @@ public class ChessBoardView extends View implements ChessGame.OnPawnPromotionLis
                 }
             }
         } else {
-            // Move piece if valid move
-            for (int[] move : validMoves) {
-                if (move[0] == row && move[1] == col) {
-                    game.movePiece(selectedRow, selectedCol, row, col);
-                    break;
+            // Get selected and target pieces
+            String selectedPiece = game.getPieceAt(selectedRow, selectedCol);
+            String targetPiece = game.getPieceAt(row, col);
+
+            // **Handle Castling (Only if clicking King first, then Rook)**
+            if (selectedPiece != null && targetPiece != null
+                    && selectedPiece.endsWith("king") && targetPiece.endsWith("rook")) {
+
+                boolean isWhite = selectedPiece.startsWith("white");
+                boolean isKingside = (col > selectedCol); // Check if it's kingside castling
+
+                if (game.canCastle(selectedRow, selectedCol, isWhite, isKingside)) {
+                    // **Move the king two squares toward the rook**
+                    int kingNewCol = isKingside ? selectedCol + 2 : selectedCol - 2;
+                    game.movePiece(selectedRow, selectedCol, selectedRow, kingNewCol);
+
+                    // **Move the rook next to the king**
+                    int rookNewCol = isKingside ? kingNewCol - 1 : kingNewCol + 1;
+                    game.movePiece(row, col, selectedRow, rookNewCol);
+
+                    Log.d("CASTLING", "Castling executed successfully.");
+                } else {
+                    Log.d("CASTLING", "Invalid castling attempt.");
                 }
             }
+            // **Prevent manual castling (king moving two squares on its own)**
+            else if (selectedPiece != null && selectedPiece.endsWith("king")) {
+                // Prevent king from moving two squares if castling is not triggered
+                if (Math.abs(col - selectedCol) == 2) {
+                    Log.d("INVALID MOVE", "Cannot move king two squares without castling.");
+                } else {
+                    // Normal move handling for king
+                    for (int[] move : validMoves) {
+                        if (move[0] == row && move[1] == col) {
+                            game.movePiece(selectedRow, selectedCol, row, col);
+                            break;
+                        }
+                    }
+                }
+            }
+            // **Normal Move Handling**
+            else {
+                for (int[] move : validMoves) {
+                    if (move[0] == row && move[1] == col) {
+                        game.movePiece(selectedRow, selectedCol, row, col);
+                        break;
+                    }
+                }
+            }
+
             // Clear selection
             selectedRow = -1;
             selectedCol = -1;
             validMoves.clear();
         }
     }
+
 
     public void promotePawn(int row, int col, String newPiece) {
         game.setPieceAt(row, col, newPiece); // Replace pawn with selected piece
