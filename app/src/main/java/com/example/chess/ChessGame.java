@@ -246,6 +246,13 @@ public class ChessGame {
 
 
     public boolean isMoveSafe(int fromRow, int fromCol, int toRow, int toCol) {
+        // **Prevent out-of-bounds errors**
+        if (fromRow < 0 || fromRow >= 8 || fromCol < 0 || fromCol >= 8 ||
+                toRow < 0 || toRow >= 8 || toCol < 0 || toCol >= 8) {
+            Log.e("ChessGame", "isMoveSafe: Out of bounds access (" + fromRow + "," + fromCol + ") -> (" + toRow + "," + toCol + ")");
+            return false; // If invalid move, return false
+        }
+
         // Simulate the move
         String piece = board[fromRow][fromCol];
         String capturedPiece = board[toRow][toCol];
@@ -543,6 +550,9 @@ public class ChessGame {
         return moves;
     }
 
+    public void setMoved(int row, int col, boolean moved) {
+        hasMoved[row][col] = moved;
+    }
 
 
 

@@ -136,12 +136,6 @@ public class ChessBoardView extends View implements ChessGame.OnPawnPromotionLis
             }
         }
 
-
-
-
-
-
-
         // **Filter Valid Moves: Only Show Moves That Don't Leave King in Check**
         List<int[]> safeMoves = new ArrayList<>();
         for (int[] move : validMoves) {
@@ -234,33 +228,39 @@ public class ChessBoardView extends View implements ChessGame.OnPawnPromotionLis
             String targetPiece = game.getPieceAt(row, col);
 
             // **Handle Castling (Only if clicking King first, then Rook)**
-            if (selectedPiece != null && targetPiece != null
-                    && selectedPiece.endsWith("king") && targetPiece.endsWith("rook")) {
-
+            if (selectedPiece != null && targetPiece != null && selectedPiece.endsWith("king") && targetPiece.endsWith("rook")) {
                 boolean isWhite = selectedPiece.startsWith("white");
-                boolean isKingside = (col > selectedCol); // Check if it's kingside castling
+                boolean isKingside = (col > selectedCol);
 
                 if (game.canCastle(selectedRow, selectedCol, isWhite, isKingside)) {
-                    // **Move the king two squares toward the rook**
+                    // Set correct positions for castling
                     int kingNewCol = isKingside ? selectedCol + 2 : selectedCol - 2;
-                    game.movePiece(selectedRow, selectedCol, selectedRow, kingNewCol);
-
-                    // **Move the rook next to the king**
                     int rookNewCol = isKingside ? kingNewCol - 1 : kingNewCol + 1;
+
+                    // **Move both king and rook**
+                    game.movePiece(selectedRow, selectedCol, selectedRow, kingNewCol);
                     game.movePiece(row, col, selectedRow, rookNewCol);
+
+                    // **Ensure they are marked as moved**
+                    game.setMoved(selectedRow, kingNewCol, true);
+                    game.setMoved(selectedRow, rookNewCol, true);
+
+                    // **Fix: Correctly Update the Indicator**
+                    validMoves.clear(); // Clear previous moves
+                    validMoves.add(new int[]{selectedRow, kingNewCol}); // Add new king position
+                    validMoves.add(new int[]{selectedRow, rookNewCol}); // Add new rook position (Fix!)
 
                     Log.d("CASTLING", "Castling executed successfully.");
                 } else {
-                    Log.d("CASTLING", "Invalid castling attempt.");
+                    Log.d("CASTLING", "Invalid castling move.");
                 }
             }
+
             // **Prevent manual castling (king moving two squares on its own)**
             else if (selectedPiece != null && selectedPiece.endsWith("king")) {
-                // Prevent king from moving two squares if castling is not triggered
                 if (Math.abs(col - selectedCol) == 2) {
                     Log.d("INVALID MOVE", "Cannot move king two squares without castling.");
                 } else {
-                    // Normal move handling for king
                     for (int[] move : validMoves) {
                         if (move[0] == row && move[1] == col) {
                             game.movePiece(selectedRow, selectedCol, row, col);
@@ -279,10 +279,9 @@ public class ChessBoardView extends View implements ChessGame.OnPawnPromotionLis
                 }
             }
 
-            // Clear selection
+            // **Clear selection and reset validMoves properly**
             selectedRow = -1;
             selectedCol = -1;
-            validMoves.clear();
         }
     }
 
