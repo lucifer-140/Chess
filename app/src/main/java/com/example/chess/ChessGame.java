@@ -10,6 +10,13 @@ public class ChessGame {
     private boolean whiteInCheck = false;
     private boolean blackInCheck = false;
 
+    private boolean whiteKingMoved = false;
+    private boolean blackKingMoved = false;
+    private boolean whiteRookLeftMoved = false, whiteRookRightMoved = false;
+    private boolean blackRookLeftMoved = false, blackRookRightMoved = false;
+
+
+
     private OnPawnPromotionListener promotionListener;
 
     public interface OnPawnPromotionListener {
@@ -381,6 +388,63 @@ public class ChessGame {
 
         return moves;
     }
+
+    public boolean canCastle(String color, boolean kingside) {
+        if (color.equals("white")) {
+            if (whiteKingMoved) return false; // King moved before
+            if (kingside && whiteRookRightMoved) return false; // Kingside Rook moved
+            if (!kingside && whiteRookLeftMoved) return false; // Queenside Rook moved
+        } else {
+            if (blackKingMoved) return false;
+            if (kingside && blackRookRightMoved) return false;
+            if (!kingside && blackRookLeftMoved) return false;
+        }
+
+        // Ensure no pieces in between
+        int row = color.equals("white") ? 7 : 0;
+        int start = kingside ? 5 : 1;
+        int end = kingside ? 6 : 3;
+
+        for (int col = start; col <= end; col++) {
+            if (getPieceAt(row, col) != null) return false;
+        }
+
+        // Ensure king does not move through check
+        if (isKingInCheck(color) || !isMoveSafe(row, 4, row, kingside ? 6 : 2)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    public void castle(String color, boolean kingside) {
+        int row = color.equals("white") ? 7 : 0;
+        if (!canCastle(color, kingside)) return;
+
+        // Move king
+        setPieceAt(row, 4, null);
+        setPieceAt(row, kingside ? 6 : 2, color + "king");
+
+        // Move rook
+        setPieceAt(row, kingside ? 7 : 0, null);
+        setPieceAt(row, kingside ? 5 : 3, color + "rook");
+
+        // Mark king and rook as moved
+        if (color.equals("white")) {
+            whiteKingMoved = true;
+            if (kingside) whiteRookRightMoved = true;
+            else whiteRookLeftMoved = true;
+        } else {
+            blackKingMoved = true;
+            if (kingside) blackRookRightMoved = true;
+            else blackRookLeftMoved = true;
+        }
+
+        // End turn immediately
+        isWhiteTurn = !isWhiteTurn;
+
+    }
+
 
     private boolean isInBounds(int row, int col) {
         return row >= 0 && row < BOARD_SIZE && col >= 0 && col < BOARD_SIZE;

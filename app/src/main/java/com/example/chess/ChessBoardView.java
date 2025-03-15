@@ -173,6 +173,38 @@ public class ChessBoardView extends View implements ChessGame.OnPawnPromotionLis
             );
         }
 
+        if (selectedRow != -1 && game.getPieceAt(selectedRow, selectedCol) != null &&
+                game.getPieceAt(selectedRow, selectedCol).endsWith("king")) {
+
+            boolean canCastleKingside = game.canCastle(game.isWhiteTurn() ? "white" : "black", true);
+            boolean canCastleQueenside = game.canCastle(game.isWhiteTurn() ? "white" : "black", false);
+
+            paint.setColor(Color.YELLOW);
+            paint.setStyle(Paint.Style.FILL);
+
+            float castleRadius = cellSize * pulseRadiusFactor; // Pulsating effect
+
+            if (canCastleKingside) {
+                int rookCol = 7;
+                canvas.drawCircle(
+                        startX + rookCol * cellSize + cellSize / 2,
+                        startY + selectedRow * cellSize + cellSize / 2,
+                        castleRadius,
+                        paint
+                );
+            }
+            if (canCastleQueenside) {
+                int rookCol = 0;
+                canvas.drawCircle(
+                        startX + rookCol * cellSize + cellSize / 2,
+                        startY + selectedRow * cellSize + cellSize / 2,
+                        castleRadius,
+                        paint
+                );
+            }
+        }
+
+
         // **Display checkmate or stalemate message**
         if (whiteCheckmate || blackCheckmate || whiteStalemate || blackStalemate) {
             String message;
@@ -215,7 +247,6 @@ public class ChessBoardView extends View implements ChessGame.OnPawnPromotionLis
 
     private void handleTouch(int row, int col) {
         if (selectedRow == -1 && selectedCol == -1) {
-            // Select piece only if it's the correct player's turn
             String piece = game.getPieceAt(row, col);
             if (piece != null) {
                 boolean isWhite = piece.startsWith("white");
@@ -223,22 +254,41 @@ public class ChessBoardView extends View implements ChessGame.OnPawnPromotionLis
                     selectedRow = row;
                     selectedCol = col;
                     validMoves = game.getValidMoves(row, col);
+
+                    // If selected piece is the king, check castling
+                    if (piece.endsWith("king")) {
+                        if (game.canCastle(isWhite ? "white" : "black", true)) {
+                            validMoves.add(new int[]{row, 7}); // Select rook
+                        }
+                        if (game.canCastle(isWhite ? "white" : "black", false)) {
+                            validMoves.add(new int[]{row, 0}); // Select rook
+                        }
+                    }
                 }
             }
         } else {
-            // Move piece if valid move
             for (int[] move : validMoves) {
                 if (move[0] == row && move[1] == col) {
-                    game.movePiece(selectedRow, selectedCol, row, col);
+                    String selectedPiece = game.getPieceAt(selectedRow, selectedCol);
+
+                    // If clicked rook while king is selected, perform castling
+                    if (selectedPiece.endsWith("king") && game.getPieceAt(row, col) != null &&
+                            game.getPieceAt(row, col).endsWith("rook")) {
+
+                        game.castle(game.isWhiteTurn() ? "white" : "black", col == 7);
+                    } else {
+                        game.movePiece(selectedRow, selectedCol, row, col);
+                    }
                     break;
                 }
             }
-            // Clear selection
             selectedRow = -1;
             selectedCol = -1;
             validMoves.clear();
         }
+        invalidate();
     }
+
 
     public void promotePawn(int row, int col, String newPiece) {
         game.setPieceAt(row, col, newPiece); // Replace pawn with selected piece
