@@ -14,6 +14,8 @@ public class ChessGame {
     private boolean blackKingMoved = false;
     private boolean whiteRookLeftMoved = false, whiteRookRightMoved = false;
     private boolean blackRookLeftMoved = false, blackRookRightMoved = false;
+    private boolean whiteRookKingsideMoved = false, whiteRookQueensideMoved = false;
+    private boolean blackRookKingsideMoved = false, blackRookQueensideMoved = false;
 
 
 
@@ -159,6 +161,19 @@ public class ChessGame {
                     promotionListener.onPawnPromotion(toRow, toCol, isWhite ? "white" : "black");
                 }
             }
+
+            if (piece.endsWith("king")) {
+                if (isWhiteTurn) whiteKingMoved = true;
+                else blackKingMoved = true;
+            }
+            if (piece.endsWith("rook")) {
+                if (fromRow == 7 && fromCol == 7) whiteRookKingsideMoved = true;  // White kingside rook
+                if (fromRow == 7 && fromCol == 0) whiteRookQueensideMoved = true; // White queenside rook
+                if (fromRow == 0 && fromCol == 7) blackRookKingsideMoved = true;  // Black kingside rook
+                if (fromRow == 0 && fromCol == 0) blackRookQueensideMoved = true; // Black queenside rook
+            }
+
+
 
             isWhiteTurn = !isWhiteTurn; // Switch turn
         }
@@ -391,13 +406,13 @@ public class ChessGame {
 
     public boolean canCastle(String color, boolean kingside) {
         if (color.equals("white")) {
-            if (whiteKingMoved) return false; // King moved before
-            if (kingside && whiteRookRightMoved) return false; // Kingside Rook moved
-            if (!kingside && whiteRookLeftMoved) return false; // Queenside Rook moved
+            if (whiteKingMoved) return false;
+            if (kingside && whiteRookKingsideMoved) return false;
+            if (!kingside && whiteRookQueensideMoved) return false;
         } else {
             if (blackKingMoved) return false;
-            if (kingside && blackRookRightMoved) return false;
-            if (!kingside && blackRookLeftMoved) return false;
+            if (kingside && blackRookKingsideMoved) return false;
+            if (!kingside && blackRookQueensideMoved) return false;
         }
 
         // Ensure no pieces in between
