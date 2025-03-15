@@ -10,6 +10,8 @@ import android.os.Handler;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
+import android.animation.ValueAnimator;
+import android.widget.ImageView;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -26,6 +28,10 @@ public class ChessBoardView extends View implements ChessGame.OnPawnPromotionLis
     private Map<String, Bitmap> pieceBitmaps;
     private int selectedRow = -1, selectedCol = -1;
     private List<int[]> validMoves = new ArrayList<>();
+
+    private ImageView backgroundImage;
+    private ValueAnimator fadeAnimator;
+    private boolean isWhiteTurn = true;
 
     private float pulseRadiusFactor = 0.2f;
     private boolean increasing = true;
@@ -84,6 +90,57 @@ public class ChessBoardView extends View implements ChessGame.OnPawnPromotionLis
         }, 50);
     }
 
+    public void setBackgroundImage(ImageView backgroundImage) {
+        this.backgroundImage = backgroundImage;
+    }
+
+    private void changeBackground(boolean isWhiteTurn) {
+        if (backgroundImage == null) {
+            return; // Skip if backgroundImage is null
+        }
+
+        int newImageRes = isWhiteTurn ? R.drawable.whiteturn : R.drawable.blackturn;
+
+        // Cancel any ongoing animation
+        if (fadeAnimator != null && fadeAnimator.isRunning()) {
+            fadeAnimator.cancel();
+        }
+
+        // Fade out the current image
+        fadeAnimator = ValueAnimator.ofFloat(1f, 0f);
+        fadeAnimator.setDuration(250); // 500ms for fade-out
+        fadeAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator animation) {
+                float alpha = (float) animation.getAnimatedValue();
+                backgroundImage.setAlpha(alpha);
+            }
+        });
+
+        fadeAnimator.addListener(new android.animation.AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(android.animation.Animator animation) {
+                // Change the image resource after fade-out
+                backgroundImage.setImageResource(newImageRes);
+
+                // Fade in the new image
+                ValueAnimator fadeInAnimator = ValueAnimator.ofFloat(0f, 1f);
+                fadeInAnimator.setDuration(250); // 500ms for fade-in
+                fadeInAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+                    @Override
+                    public void onAnimationUpdate(ValueAnimator animation) {
+                        float alpha = (float) animation.getAnimatedValue();
+                        backgroundImage.setAlpha(alpha);
+                    }
+                });
+
+                fadeInAnimator.start();
+            }
+        });
+
+        fadeAnimator.start();
+    }
+
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
@@ -93,6 +150,7 @@ public class ChessBoardView extends View implements ChessGame.OnPawnPromotionLis
         cellSize = boardLength / BOARD_SIZE;
         int startX = (screenWidth - boardLength) / 2;
         int startY = (screenHeight - boardLength) / 2;
+
 
         // Find kings' positions and check status
         int[] whiteKingPos = game.findKingPosition("white");
@@ -134,12 +192,6 @@ public class ChessBoardView extends View implements ChessGame.OnPawnPromotionLis
                 }
             }
         }
-
-
-
-
-
-
 
         // **Filter Valid Moves: Only Show Moves That Don't Leave King in Check**
         List<int[]> safeMoves = new ArrayList<>();
@@ -222,6 +274,14 @@ public class ChessBoardView extends View implements ChessGame.OnPawnPromotionLis
             paint.setTextAlign(Paint.Align.CENTER);
             canvas.drawText(message, screenWidth / 2, screenHeight / 2, paint);
         }
+
+        boolean currentTurn = game.isWhiteTurn();
+        if (currentTurn != isWhiteTurn) {
+            isWhiteTurn = currentTurn; // Update the turn state
+            changeBackground(isWhiteTurn); // Trigger background change
+        }
+
+
     }
 
 
